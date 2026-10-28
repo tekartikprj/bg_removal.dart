@@ -1,0 +1,42 @@
+name: bg_removal_example
+description: "Removes the background of a photo (camera, gallery or a sample), keeping the person and what they carry, and saves the cut-out."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # The pipeline and the Android engines: ML Kit, then ONNX as the fallback.
+  tekartik_bg_removal_flutter:
+    path: ../../packages/bg_removal_flutter
+  tekartik_bg_removal_mlkit:
+    path: ../../packages/bg_removal_mlkit
+  tekartik_bg_removal_onnx:
+    path: ../../packages/bg_removal_onnx
+  # Camera and gallery.
+  image_picker: ">=1.2.3"
+  # Saves the cut-out where the user chooses.
+  tekaly_file_download:
+    git:
+      url: https://github.com/tekartikprj/tekaly
+      path: flutter_packages/file_download
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # tool/screenshot.dart
+  image: ">=4.2.0"
+  path: ">=1.9.1"
+  tekartik_lints_flutter:
+    git:
+      url: https://github.com/tekartik/common_flutter.dart
+      path: packages/lints_flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/

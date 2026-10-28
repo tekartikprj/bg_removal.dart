@@ -1,0 +1,6 @@
+include: package:tekartik_lints_flutter/strict.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**

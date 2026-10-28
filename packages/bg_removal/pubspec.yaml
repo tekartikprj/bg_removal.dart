@@ -1,0 +1,26 @@
+name: tekartik_bg_removal
+description: Background removal that keeps a person and what they carry (pure Dart core, the engine interface and the pipeline).
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  # PNG encoding of the cut-out.
+  image: ">=4.2.0"
+  # WebP encoding of the cut-out (lossy colour, lossless alpha), pure Dart.
+  tekartik_app_image_webp:
+    git:
+      url: https://github.com/tekartik/app_image.dart
+      path: packages/app_image_webp
+    version: ">=0.1.0"
+
+dev_dependencies:
+  test: ">=1.31.0"
+  tekartik_lints:
+    git:
+      url: https://github.com/tekartik/common.dart
+      path: packages/lints
+
+resolution: workspace

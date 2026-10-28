@@ -1,0 +1,17 @@
+name: _
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+# The packages and what the benches share. The apps (example/, the bench
+# apps) are not members: each resolves its own dependencies, so that one
+# platform's never hold back another's.
+workspace:
+  - packages/bg_removal
+  - packages/bg_removal_flutter
+  - packages/bg_removal_mlkit
+  - packages/bg_removal_onnx
+  - packages/bg_removal_web
+  - bench/bg_removal_bench_common
+  - repo_support

@@ -1,0 +1,39 @@
+name: bg_removal_bench
+description: "The bench of the background removal engines on Android and Linux: ML Kit and ONNX on fixtures with reference masks."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # The bench and its fixtures, shared with the web app.
+  bg_removal_bench_common:
+    path: ../bg_removal_bench_common
+  # The packages: the pipeline, and the Android and Linux engines.
+  tekartik_bg_removal_flutter:
+    path: ../../packages/bg_removal_flutter
+  tekartik_bg_removal_mlkit:
+    path: ../../packages/bg_removal_mlkit
+  tekartik_bg_removal_onnx:
+    path: ../../packages/bg_removal_onnx
+
+  # The ML Kit probe calls ML Kit directly.
+  google_mlkit_subject_segmentation: ">=0.2.1"
+  image: ">=4.12.0"
+  path_provider: ">=2.1.6"
+  path: ">=1.9.1"
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  tekartik_lints_flutter:
+    git:
+      url: https://github.com/tekartik/common_flutter.dart
+      path: packages/lints_flutter
+
+flutter:
+  uses-material-design: true

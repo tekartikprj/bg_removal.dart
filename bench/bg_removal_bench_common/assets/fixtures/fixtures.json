@@ -1,0 +1,40 @@
+{
+  "_comment": "Phase 0 fixtures. ref: hand-cleaned reference mask (person + what they carry). bags: boxes inside the bags, [left, top, right, bottom] in image pixels. Photos from Wikimedia Commons, see ATTRIBUTION.md.",
+  "fixtures": [
+    {
+      "id": "handbag",
+      "hard": "torso only, black bag held low against a dark dress, dark car behind",
+      "bags": [[400, 1300, 800, 1650]]
+    },
+    {
+      "id": "tote",
+      "hard": "white tote on the shoulder, white wall with graffiti",
+      "bags": [[1010, 1200, 1180, 1700]]
+    },
+    {
+      "id": "rainy",
+      "hard": "red umbrella, bag on the hip, busy wet street",
+      "bags": [[135, 990, 215, 1140]]
+    },
+    {
+      "id": "street",
+      "hard": "cup, paper bag, yoga mat, tote cut by the frame, blurred street",
+      "bags": [[950, 1600, 1230, 1900]]
+    },
+    {
+      "id": "coat",
+      "hard": "old black and white photo, handbag on the forearm, a second person behind",
+      "bags": [[800, 880, 1020, 1120]]
+    },
+    {
+      "id": "two_women",
+      "hard": "two people side by side, shoulder bag, a man with a backpack behind them",
+      "bags": [[540, 490, 650, 600]]
+    },
+    {
+      "id": "old_couple",
+      "hard": "two people far away, a bag and a shopping trolley, a cane, black and white",
+      "bags": [[520, 900, 600, 1080], [655, 840, 780, 1020]]
+    }
+  ]
+}
