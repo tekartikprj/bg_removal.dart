@@ -94,7 +94,7 @@ Future<Uint8List> cutOutFile(BgRemover remover, String path) async {
 ```dart
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:tekartik_bg_removal_flutter/bg_removal_flutter.dart';
 
 class CutOutPage extends StatefulWidget {

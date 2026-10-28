@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:tekartik_bg_removal_flutter/bg_removal_flutter.dart';
 
 import '../bench/bench_host.dart';

@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Material widgets (package:flutter/material.dart is deprecated).
+  material_ui: ">=1.5.0"
 
   # The bench and its fixtures, shared with the Android app.
   bg_removal_bench_common:

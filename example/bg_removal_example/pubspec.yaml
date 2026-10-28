@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Material widgets (package:flutter/material.dart is deprecated).
+  material_ui: ">=1.5.0"
   # The pipeline and the Android engines: ML Kit, then ONNX as the fallback.
   tekartik_bg_removal_flutter:
     path: ../../packages/bg_removal_flutter

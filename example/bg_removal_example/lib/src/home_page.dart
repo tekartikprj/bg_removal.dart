@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:tekaly_file_download/download_file.dart';
 import 'package:tekartik_bg_removal_flutter/bg_removal_flutter.dart';
 import 'package:tekartik_bg_removal_mlkit/bg_removal_mlkit.dart';

@@ -1,5 +1,5 @@
 import 'package:bg_removal_bench_common/bg_removal_bench_common.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'src/bench_setup.dart';
 
