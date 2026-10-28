@@ -14,4 +14,5 @@ workspace:
   - packages/bg_removal_onnx
   - packages/bg_removal_web
   - bench/bg_removal_bench_common
+  - example/bg_removal_example_common
   - repo_support

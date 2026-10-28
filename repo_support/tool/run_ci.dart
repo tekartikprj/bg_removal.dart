@@ -10,8 +10,10 @@ Future<void> main() async {
     'packages/bg_removal_onnx',
     'packages/bg_removal_web',
     'bench/bg_removal_bench_common',
+    'example/bg_removal_example_common',
     // The apps resolve their own dependencies (not workspace members).
     'example/bg_removal_example',
+    'example/bg_removal_example_web',
     'bench/bg_removal_bench',
     'bench/bg_removal_bench_web',
   ]) {

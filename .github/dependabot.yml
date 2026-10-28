@@ -14,6 +14,10 @@ updates:
     schedule:
       interval: "monthly"
   - package-ecosystem: "pub"
+    directory: "example/bg_removal_example_web"
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: "pub"
     directory: "bench/bg_removal_bench"
     schedule:
       interval: "monthly"

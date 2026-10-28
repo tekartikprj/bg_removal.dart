@@ -10,8 +10,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # Material widgets (package:flutter/material.dart is deprecated).
   material_ui: ">=1.5.0"
+  # The page (camera, gallery, sample, download), shared with the web
+  # example.
+  bg_removal_example_common:
+    path: ../bg_removal_example_common
   # The pipeline and the Android engines: ML Kit, then ONNX as the fallback.
   tekartik_bg_removal_flutter:
     path: ../../packages/bg_removal_flutter
@@ -19,13 +22,6 @@ dependencies:
     path: ../../packages/bg_removal_mlkit
   tekartik_bg_removal_onnx:
     path: ../../packages/bg_removal_onnx
-  # Camera and gallery.
-  image_picker: ">=1.2.3"
-  # Saves the cut-out where the user chooses.
-  tekaly_file_download:
-    git:
-      url: https://github.com/tekartikprj/tekaly
-      path: flutter_packages/file_download
 
 dev_dependencies:
   flutter_test:
@@ -40,5 +36,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/

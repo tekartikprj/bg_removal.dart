@@ -10,18 +10,17 @@ permission).
 
 ## What it uses
 
-- `tekartik_bg_removal_flutter`: the photo from bytes, the removal in an
-  isolate, `BgRgbaImageView`.
-- `BgRemoverFallback([BgMlKitRemover(), BgOnnxRemover()])`: ML Kit Subject
-  Segmentation (`tekartik_bg_removal_mlkit`) where Google Play services
-  exist, else MODNet + u2netp on ONNX Runtime (`tekartik_bg_removal_onnx`,
-  18 MB of models downloaded once). The engine is prepared at start; its
-  status shows at the top.
-- `image_picker` for the camera and the gallery (at most 1600 px: plenty for
-  a cut-out, and under a second on a phone).
-- `tekaly_file_download` to save the cut-out.
-
-All of it is in `lib/src/home_page.dart`.
+- `bg_removal_example_common`: the page (camera, gallery, sample, the
+  cut-out next to the original, the download), shared with the web example
+  `../bg_removal_example_web`; the two apps never depend on each other.
+- `BgRemoverFallback([BgMlKitRemover(), BgOnnxRemover()])` (`lib/main.dart`):
+  ML Kit Subject Segmentation (`tekartik_bg_removal_mlkit`) where Google
+  Play services exist, else MODNet + u2netp on ONNX Runtime
+  (`tekartik_bg_removal_onnx`, 18 MB of models downloaded once). The page
+  prepares the engine at start; its status shows at the top.
+- `image_picker` for the camera and the gallery (at most 1600 px: plenty
+  for a cut-out, and under a second on a phone), `tekaly_file_download` to
+  save the cut-out (both through the shared page).
 
 ## The Android project
 
@@ -46,7 +45,7 @@ dart run tool/screenshot.dart [--device SERIAL]
 
 ## Credits
 
-The sample photo is [Young woman with tote bag in Madison, Wisconsin
+The sample photo (in `bg_removal_example_common`) is [Young woman with tote bag in Madison, Wisconsin
 2020](https://commons.wikimedia.org/wiki/File:Young_woman_with_tote_bag_in_Madison,_Wisconsin_2020.jpg)
 by John Benson, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0),
 resized.

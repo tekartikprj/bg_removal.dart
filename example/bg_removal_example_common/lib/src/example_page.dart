@@ -1,33 +1,45 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:tekaly_file_download/download_file.dart';
 import 'package:tekartik_bg_removal_flutter/bg_removal_flutter.dart';
-import 'package:tekartik_bg_removal_mlkit/bg_removal_mlkit.dart';
-import 'package:tekartik_bg_removal_onnx/bg_removal_onnx.dart';
-
-/// Opens the sample photo at start (`--dart-define=EXAMPLE_SAMPLE=true`),
-/// for screenshots.
-const exampleSample = bool.fromEnvironment('EXAMPLE_SAMPLE');
 
 /// The sample photo (CC BY 2.0, John Benson, Wikimedia Commons).
-const sampleAsset = 'assets/sample.jpg';
+const exampleSampleAsset =
+    'packages/bg_removal_example_common/assets/sample.jpg';
 
-/// The photo, its cut-out, and the buttons.
-class HomePage extends StatefulWidget {
-  /// The home page.
-  const HomePage({super.key});
+/// Takes or picks a photo, removes its background with [remover] (the
+/// person and what they carry stay), shows both, and saves the cut-out.
+class BgRemovalExamplePage extends StatefulWidget {
+  /// The engine: the page prepares it at start and closes it at the end.
+  final BgRemover remover;
+
+  /// Shows a camera button (Android); the web picks files.
+  final bool camera;
+
+  /// Opens the sample photo at start (screenshots).
+  final bool openSample;
+
+  /// Called after each cut-out (tools).
+  final void Function(BgRemovalResult result, Duration time)? onDone;
+
+  /// The page.
+  const BgRemovalExamplePage({
+    super.key,
+    required this.remover,
+    this.camera = true,
+    this.openSample = false,
+    this.onDone,
+  });
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<BgRemovalExamplePage> createState() => _BgRemovalExamplePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  // ML Kit on Android (Google Play services), MODNet + u2netp on ONNX
-  // Runtime when it cannot run (or crashed the app last time).
-  final _remover = BgRemoverFallback([BgMlKitRemover(), BgOnnxRemover()]);
+class _BgRemovalExamplePageState extends State<BgRemovalExamplePage> {
   late final Future<void> _ready;
   var _status = 'Preparing the engine...';
   var _busy = false;
@@ -35,25 +47,21 @@ class _HomePageState extends State<HomePage> {
   BgRemovalResult? _result;
   Duration? _time;
 
+  BgRemover get _remover => widget.remover;
+
   @override
   void initState() {
     super.initState();
     // Awaited before each photo; its error shows in the status line.
     _ready = _prepare()..ignore();
-    if (exampleSample) {
-      // Screenshots: no system bars (notification icons).
-      unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive));
+    if (widget.openSample) {
       unawaited(_open(_sampleBytes));
     }
   }
 
   Future<void> _prepare() async {
     try {
-      await _remover.prepare(
-        onStatus: (status) {
-          if (mounted) setState(() => _status = status);
-        },
-      );
+      await _remover.prepare(onStatus: _setStatus);
       _setStatus('Ready (${_remover.name})');
     } catch (e) {
       _setStatus('No engine: $e');
@@ -72,7 +80,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<Uint8List> _sampleBytes() async =>
-      (await rootBundle.load(sampleAsset)).buffer.asUint8List();
+      (await rootBundle.load(exampleSampleAsset)).buffer.asUint8List();
 
   Future<void> _pick(ImageSource source) => _open(() async {
     // 1600 px is plenty for a cut-out, and keeps the engine under a second.
@@ -96,20 +104,19 @@ class _HomePageState extends State<HomePage> {
       });
       await _ready;
       _setStatus('Removing the background...');
+      // Paint the status first: on the web the work runs on this thread.
+      await WidgetsBinding.instance.endOfFrame;
       final sw = Stopwatch()..start();
       final result = await bgRemoveBackgroundFromBytes(_remover, bytes);
+      final time = sw.elapsed;
       setState(() {
         _result = result;
-        _time = sw.elapsed;
+        _time = time;
         _status = 'Done';
       });
-      // For tools (screenshots): the run is over.
-      // ignore: avoid_print
-      print('EXAMPLE| done ${result.engine} ${sw.elapsedMilliseconds} ms');
+      widget.onDone?.call(result, time);
     } catch (e) {
       _setStatus('Error: $e');
-      // ignore: avoid_print
-      print('EXAMPLE| error $e');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -118,6 +125,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _download({required bool webp}) async {
     final cutout = _result!.cutout;
     _setStatus('Encoding...');
+    await WidgetsBinding.instance.endOfFrame;
     final data = webp ? await _encodeWebp(cutout) : await _encodePng(cutout);
     _setStatus('Done');
     await downloadFile(
@@ -205,15 +213,16 @@ class _HomePageState extends State<HomePage> {
                 spacing: 8,
                 alignment: WrapAlignment.center,
                 children: [
-                  FilledButton.icon(
-                    onPressed: _busy ? null : () => _pick(ImageSource.camera),
-                    icon: const Icon(Icons.photo_camera),
-                    label: const Text('Camera'),
-                  ),
+                  if (widget.camera)
+                    FilledButton.icon(
+                      onPressed: _busy ? null : () => _pick(ImageSource.camera),
+                      icon: const Icon(Icons.photo_camera),
+                      label: const Text('Camera'),
+                    ),
                   FilledButton.icon(
                     onPressed: _busy ? null : () => _pick(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
-                    label: const Text('Gallery'),
+                    label: const Text(kIsWeb ? 'Open' : 'Gallery'),
                   ),
                   OutlinedButton(
                     onPressed: _busy ? null : () => _open(_sampleBytes),

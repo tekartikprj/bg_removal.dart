@@ -5,10 +5,13 @@ carry**: a bag, an umbrella, a phone. On the device, no server: ML Kit
 Subject Segmentation on Android, ONNX models (MODNet + u2netp) on Android,
 Linux and the web.
 
-<img src="doc/screenshots/example.png" alt="The example app on a Pixel 7a: the sample photo with and without its background" width="320">
+| Android (ML Kit, 0.9 s) | Web (onnxruntime-web, 1.1 s) |
+|---|---|
+| <img src="doc/screenshots/example.png" alt="The Android example: the sample photo with and without its background" width="300"> | <img src="doc/screenshots/example_web.png" alt="The web example: the sample photo with and without its background" width="520"> |
 
-*The example app on a Pixel 7a: the sample photo, and the same without its
-background (ML Kit, 0.9 s). Photo: John Benson, CC BY 2.0.*
+*The examples: the sample photo, and the same without its background. On
+Android ML Kit (Pixel 7a); in Chrome MODNet + u2netp, which keep a bit of the
+wall touching her hair. Photo: John Benson, CC BY 2.0.*
 
 ## Packages
 
@@ -92,10 +95,13 @@ q80 1.0 s (170 KB).
 
 ## Repository
 
-- `packages/`: the packages (a pub workspace with `bench/bg_removal_bench_common`
+- `packages/`: the packages (a pub workspace with the two shared packages,
+  `example/bg_removal_example_common` and `bench/bg_removal_bench_common`,
   and `repo_support`).
-- `example/bg_removal_example`: the Android example (camera, gallery,
-  sample, download).
+- `example/`: the examples, `bg_removal_example` (Android: camera,
+  gallery, sample, download) and `bg_removal_example_web` (the browser:
+  open a photo, sample, download). They never depend on each other and
+  share their page through `bg_removal_example_common` (no engine).
 - `bench/`: the benches that produced the numbers above, on Android and Linux
   (`bg_removal_bench`) and in the browser (`bg_removal_bench_web`). The apps
   resolve their own dependencies (not workspace members), so that one

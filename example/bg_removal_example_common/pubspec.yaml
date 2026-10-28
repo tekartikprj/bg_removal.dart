@@ -1,0 +1,36 @@
+name: bg_removal_example_common
+description: "Shared by the background removal examples (Android, web): the page to take or pick a photo, show its cut-out and save it. Depends on no engine."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  material_ui: ">=1.5.0"
+  tekartik_bg_removal_flutter:
+    path: ../../packages/bg_removal_flutter
+  # Camera and gallery (a file chooser on the web).
+  image_picker: ">=1.2.3"
+  # Saves the cut-out: a "save as" dialog, a browser download on the web.
+  tekaly_file_download:
+    git:
+      url: https://github.com/tekartikprj/tekaly
+      path: flutter_packages/file_download
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  tekartik_lints_flutter:
+    git:
+      url: https://github.com/tekartik/common_flutter.dart
+      path: packages/lints_flutter
+
+flutter:
+  assets:
+    - assets/
+
+resolution: workspace

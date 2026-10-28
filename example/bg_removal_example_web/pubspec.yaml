@@ -1,0 +1,42 @@
+name: bg_removal_example_web
+description: "Removes the background of a photo in the browser (onnxruntime-web), keeping the person and what they carry, and downloads the cut-out."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  material_ui: ">=1.5.0"
+  # The page (open a photo, sample, download), shared with the Android
+  # example.
+  bg_removal_example_common:
+    path: ../bg_removal_example_common
+  # The pipeline and the web engine (onnxruntime-web).
+  tekartik_bg_removal_flutter:
+    path: ../../packages/bg_removal_flutter
+  tekartik_bg_removal_web:
+    path: ../../packages/bg_removal_web
+  web: ">=1.1.0"
+
+dev_dependencies:
+  # tool/screenshot.dart
+  path: ">=1.9.1"
+  tekartik_flutter_build:
+    git:
+      url: https://github.com/tekartik/app_build.dart
+      path: packages/flutter_build
+  tekartik_lints_flutter:
+    git:
+      url: https://github.com/tekartik/common_flutter.dart
+      path: packages/lints_flutter
+  tekartik_web_publish:
+    git:
+      url: https://github.com/tekartik/app_build.dart
+      path: packages/web_publish
+
+flutter:
+  uses-material-design: true
