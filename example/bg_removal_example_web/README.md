@@ -5,6 +5,9 @@ its background is removed in the browser, the person and what they carry
 stay, and the cut-out can be downloaded as WebP or PNG. Nothing leaves the
 browser.
 
+Deployed: <https://bg_removal.surge.sh/> (surge sends no cross-origin
+isolation headers: onnxruntime-web runs on one thread there).
+
 ![The sample photo with and without its background](../../doc/screenshots/example_web.png)
 
 ## What it uses

@@ -5,7 +5,10 @@ carry**: a bag, an umbrella, a phone. On the device, no server: ML Kit
 Subject Segmentation on Android, ONNX models (MODNet + u2netp) on Android,
 Linux and the web.
 
-| Android (ML Kit, 0.9 s) | Web (onnxruntime-web, 1.1 s) |
+**Try it in your browser: <https://bg_removal.surge.sh/>** (the web example:
+nothing leaves the browser; the 18 MB of models are downloaded once).
+
+| Android (ML Kit, 0.9 s) | [Web](https://bg_removal.surge.sh/) (onnxruntime-web, 1.1 s) |
 |---|---|
 | <img src="doc/screenshots/example.png" alt="The Android example: the sample photo with and without its background" width="300"> | <img src="doc/screenshots/example_web.png" alt="The web example: the sample photo with and without its background" width="520"> |
 
