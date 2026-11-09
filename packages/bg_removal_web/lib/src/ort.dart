@@ -72,7 +72,8 @@ extension type OrtTensor._(JSObject _) implements JSObject {
 final _loads = <String, Future<void>>{};
 
 /// Loads the onnxruntime-web script from [scriptUrl] once (nothing to do
-/// when the page already has `ort`).
+/// when the page already has `ort`). After a failure (offline), the next
+/// call tries again.
 Future<void> bgOrtWebLoad(String scriptUrl) {
   if (_ort != null) {
     return Future.value();
@@ -88,7 +89,14 @@ Future<void> bgOrtWebLoad(String scriptUrl) {
         StateError('cannot load $scriptUrl'),
       )).toJS;
     web.document.head!.append(script);
-    await loaded.future;
+    try {
+      await loaded.future;
+    } catch (_) {
+      script.remove();
+      // The caller gets the error: the next call loads again.
+      unawaited(_loads.remove(scriptUrl));
+      rethrow;
+    }
     // The wasm files sit next to the script.
     ortWasmEnv.wasmPaths = scriptUrl.substring(
       0,

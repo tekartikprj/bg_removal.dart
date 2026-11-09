@@ -38,7 +38,9 @@ Future<BgRemovalResult> cutOut(BgRgbaImage image) async {
 
 * Nothing to add to `index.html`: `prepare` injects the script
   (`bgOrtWebWasmScriptUrl`, onnxruntime-web `bgOrtWebVersion` 1.30.0, 14 MB
-  of wasm). A page that already loads `ort` keeps its own.
+  of wasm). A page that already loads `ort` keeps its own. When the script
+  cannot load (offline), `prepare` throws and the next `prepare` tries
+  again.
 * `executionProviders: ['webgpu', 'wasm']` tries WebGPU first; it needs the
   full build (`bgOrtWebAllScriptUrl`, 28 MB of wasm), chosen by default
   when `webgpu` is in the list. Only one onnxruntime-web per page: the
@@ -65,8 +67,10 @@ Future<BgRemovalResult> cutOut(BgRgbaImage image) async {
   `isnet-general-use.onnx`). Serve them with a long cache.
 * Each file is checked by size and sha256 (WebCrypto) before use and kept
   in the Cache API (`bgWebModelCacheName`): the second visit downloads
-  nothing. The Cache API needs https or localhost; elsewhere every visit
-  downloads.
+  nothing. The Cache API and WebCrypto need https or localhost; on a plain
+  http page (a phone on the LAN) every visit downloads, and the sha256 is
+  computed in Dart (0.1 s with dart2js, 0.8 s with dart2wasm for the default
+  pair on a desktop).
 
 ### Speed
 

@@ -13,8 +13,11 @@ dependencies:
   tekartik_bg_removal:
     path: ../bg_removal
   web: ">=1.1.0"
+  # sha256 of the models where WebCrypto is missing (plain http pages).
+  crypto: ">=3.0.8"
 
 dev_dependencies:
+  test: ">=1.31.0"
   tekartik_lints:
     git:
       url: https://github.com/tekartik/common.dart

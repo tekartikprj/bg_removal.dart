@@ -1,6 +1,8 @@
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:tekartik_bg_removal/models.dart';
 import 'package:web/web.dart' as web;
 
@@ -99,12 +101,20 @@ Future<bool> _matches(Uint8List bytes, BgOnnxModel model) async {
   if (bytes.length != model.size) {
     return false;
   }
+  return await _sha256Hex(bytes) == model.sha256;
+}
+
+Future<String> _sha256Hex(Uint8List bytes) async {
+  // WebCrypto only exists in a secure context (https or localhost): on a
+  // plain http page, hash in Dart (0.1 to 0.8 s for 18 MB on a desktop).
+  if ((web.window.crypto as JSObject)['subtle'] == null) {
+    return crypto.sha256.convert(bytes).toString();
+  }
   final digest = await web.window.crypto.subtle
       .digest('SHA-256'.toJS, bytes.toJS)
       .toDart;
-  final hex = (digest! as JSArrayBuffer).toDart
+  return (digest! as JSArrayBuffer).toDart
       .asUint8List()
       .map((b) => b.toRadixString(16).padLeft(2, '0'))
       .join();
-  return hex == model.sha256;
 }

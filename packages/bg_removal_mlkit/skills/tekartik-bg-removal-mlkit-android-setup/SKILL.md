@@ -86,7 +86,13 @@ the fixtures, 0.93 s for a 1600x1200 photo; the best Android engine.
   `guardDir`); after a crash `getStatus()` answers `unsupported`, `prepare`
   throws, and a `BgRemoverFallback` moves on to the next engine.
   `lastCrash()` tells what was running, `clearCrash()` or
-  `retryAfterCrash: true` tries ML Kit again.
+  `retryAfterCrash: true` tries ML Kit again. A Dart error (a
+  `PlatformException`) deletes the guard like a success: only a crash
+  disables ML Kit. The calls run one at a time (one guard file).
+* Prefer files: `bgRemoveBackgroundFromFile` lets ML Kit decode the file
+  itself (`useFile`, the default), which is how the scores above were
+  measured. From bytes, image data, or when `maxSegmentSize` downscales,
+  ML Kit gets the pixels.
 * Test on a real arm64 phone: on x86_64 emulators ML Kit crashed in its GL
   thread (`drishti_gl_runn`), with the software GPU and the host GPU.
 

@@ -5,7 +5,13 @@ its model delivered by Google Play services. It keeps the person and what
 they carry by itself, and it is the best engine measured: mean IoU 0.97 and
 every bag kept on the fixtures, 0.9 s for a 1600x1200 photo on a Pixel 7a.
 
-## Setup
+Android only: elsewhere `getStatus()` says `unsupported` and `prepare()`
+throws, so put it first in a `BgRemoverFallback` with an ONNX engine after
+it.
+
+## Getting started
+
+Not on pub.dev, add it as a git dependency:
 
 ```yaml
 dependencies:
@@ -32,9 +38,8 @@ The app's Android project needs (details in the skill below):
   -keep class com.google.android.gms.internal.mlkit_** { *; }
   ```
 
-- `minSdk` 24 or more, and a device with Google Play services.
-
-## Usage
+- `minSdk` 24 or more, and a device with Google Play services (a real
+  arm64 phone: ML Kit crashes on x86_64 emulators).
 
 ```dart
 import 'package:tekartik_bg_removal/bg_removal.dart';
@@ -48,16 +53,35 @@ Future<BgRemover> androidEngine(BgRemover fallback) async {
 }
 ```
 
+Then pass the remover to `bgRemoveBackgroundFromFile` (or `...FromBytes`)
+of `tekartik_bg_removal_flutter`.
+
+## How it behaves
+
 - Only the foreground mask is asked: ML Kit's per-subject masks crash the
   app in native code (Android 17, Play services module 264131100400).
 - A native crash cannot be caught: each call is written to a guard file
   first, and after a crash `getStatus()` says `unsupported`, so a
-  `BgRemoverFallback` moves on to the next engine. `lastCrash()`,
-  `clearCrash()`, `retryAfterCrash: true`.
+  `BgRemoverFallback` moves on to the next engine. A Dart error (a
+  `PlatformException`) is not a crash: it does not disable ML Kit.
+  `lastCrash()`, `clearCrash()`, `retryAfterCrash: true`.
+- ML Kit calls run one at a time.
 - After an install, the module may still be downloading: `prepare` waits
   (`moduleWait`, 3 minutes).
 - ML Kit gives a foreground (every subject) but no person mask: for
   `BgKeep.person`, merge it with MODNet (`BgRemoverMerge`).
+
+## Common mistakes
+
+- Release build only, every ML Kit call fails with "getClass() on a null
+  object reference": the R8 keep rules are missing.
+- The first photos after an install fail with "Waiting for the subject
+  segmentation optional module to be downloaded": `prepare` was not
+  awaited first, or the manifest meta-data is missing.
+- Expecting the measured scores from bytes: they were measured with files
+  (`bgRemoveBackgroundFromFile`, ML Kit decodes the file itself, see
+  `useFile`). From bytes, or when `maxSegmentSize` downscales, ML Kit gets
+  the pixels.
 
 ## Agent skills
 

@@ -7,6 +7,8 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tekartik_bg_removal/bg_removal.dart';
 
+import 'mlkit_guard.dart';
+
 /// The ML Kit engine: Subject Segmentation (Android only, its model comes
 /// from Play services). It gives the foreground: every subject, the person
 /// and what they carry (no person mask on its own).
@@ -19,7 +21,9 @@ import 'package:tekartik_bg_removal/bg_removal.dart';
 /// - A native crash kills the app, so each call is written to a guard file
 ///   first: after a crash, [getStatus] says unsupported and [prepare]
 ///   throws, until [clearCrash] (or [retryAfterCrash]). With
-///   [BgRemoverFallback] the next engine takes over.
+///   [BgRemoverFallback] the next engine takes over. A Dart error (a
+///   `PlatformException`) is not a crash: it does not disable ML Kit. The
+///   calls run one at a time.
 /// - The first call after an install can fail while Play services
 ///   downloads the module: [prepare] waits for it, [moduleWait] at most.
 class BgMlKitRemover implements BgRemover {
@@ -74,16 +78,11 @@ class BgMlKitRemover implements BgRemover {
     }
   }
 
-  Future<T> _guarded<T>(String what, Future<T> Function() call) async {
-    final guard = await _guardFile();
-    await guard.writeAsString(
-      '$what, ${DateTime.now().toIso8601String()}',
-      flush: true,
-    );
-    final result = await call();
-    await guard.delete();
-    return result;
-  }
+  late final _crashGuard = BgMlKitGuard(_guardFile);
+
+  // Only a native crash leaves the guard file (see BgMlKitGuard).
+  Future<T> _guarded<T>(String what, Future<T> Function() call) =>
+      _crashGuard.run(what, call);
 
   @override
   Future<BgRemoverStatus> getStatus() async {
@@ -143,7 +142,6 @@ class BgMlKitRemover implements BgRemover {
       } on PlatformException catch (e) {
         final waiting = '${e.message}'.contains('to be downloaded');
         if (!waiting || sw.elapsed > moduleWait) {
-          await (await _guardFile()).delete();
           await segmenter.close();
           rethrow;
         }

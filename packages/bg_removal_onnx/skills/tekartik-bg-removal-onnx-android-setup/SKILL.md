@@ -101,3 +101,7 @@ Future<BgRemovalResult> removeBackground(BgRgbaImage image) async {
   `ai.onnxruntime` keep rule is missing.
 * A 100+ MB APK: built without `--split-per-abi` (every ABI's
   onnxruntime).
+* Two `prepare` calls at once (one on screen open, one from the first
+  removal, since `segment` prepares too): the models download twice into
+  the same file and one call fails. Keep the first prepare future and await
+  it before each removal.
