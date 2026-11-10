@@ -11,6 +11,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart';
+import 'package:process_run/shell.dart'
+    show Shell, ShellLinesController, ShellOptions;
 
 Future<void> main(List<String> args) async {
   String? option(String name) {
@@ -58,33 +60,53 @@ Future<void> main(List<String> args) async {
   });
 
   final userDataDir = Directory.systemTemp.createTempSync('bg_example_chrome');
-  final process = await Process.start(chrome, [
-    '--headless=new',
-    // CanvasKit needs WebGL: software rendering.
-    '--use-angle=swiftshader',
-    '--enable-unsafe-swiftshader',
-    '--no-first-run',
-    '--no-default-browser-check',
-    '--window-size=1100,760',
-    '--force-device-scale-factor=1',
-    '--hide-scrollbars',
-    '--remote-debugging-port=0',
-    '--user-data-dir=${userDataDir.path}',
-    'http://127.0.0.1:${server.port}/',
-  ]);
-  unawaited(process.stdout.drain<void>());
+  final chromeOut = ShellLinesController(encoding: utf8);
+  final chromeErr = ShellLinesController(encoding: utf8);
+  final chromeStarted = Completer<Process>();
+  // Not awaited: Chrome runs while the page is captured. Its exit code comes
+  // with its process (`onProcess`), the run ends with its output pipes, which
+  // its helpers can hold a while.
+  final chromeRun =
+      Shell(
+        stdout: chromeOut.sink,
+        stderr: chromeErr.sink,
+        verbose: false,
+        throwOnError: false,
+      ).runExecutableArguments(chrome, [
+        '--headless=new',
+        // CanvasKit needs WebGL: software rendering.
+        '--use-angle=swiftshader',
+        '--enable-unsafe-swiftshader',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--window-size=1100,760',
+        '--force-device-scale-factor=1',
+        '--hide-scrollbars',
+        '--remote-debugging-port=0',
+        '--user-data-dir=${userDataDir.path}',
+        'http://127.0.0.1:${server.port}/',
+      ], onProcess: chromeStarted.complete);
+  unawaited(
+    chromeRun.then<void>(
+      (_) {},
+      onError: (Object e, StackTrace st) {
+        // It could not start.
+        if (!chromeStarted.isCompleted) chromeStarted.completeError(e, st);
+      },
+    ),
+  );
+  final process = await chromeStarted.future;
+  chromeOut.stream.listen((_) {});
   // "DevTools listening on ws://127.0.0.1:<port>/devtools/browser/<id>"
   final devTools = Completer<int>();
-  process.stderr.transform(utf8.decoder).transform(const LineSplitter()).listen(
-    (line) {
-      final match = RegExp(
-        r'DevTools listening on ws://127\.0\.0\.1:(\d+)/',
-      ).firstMatch(line);
-      if (match != null && !devTools.isCompleted) {
-        devTools.complete(int.parse(match.group(1)!));
-      }
-    },
-  );
+  chromeErr.stream.listen((line) {
+    final match = RegExp(
+      r'DevTools listening on ws://127\.0\.0\.1:(\d+)/',
+    ).firstMatch(line);
+    if (match != null && !devTools.isCompleted) {
+      devTools.complete(int.parse(match.group(1)!));
+    }
+  });
   try {
     final port = await devTools.future.timeout(const Duration(seconds: 30));
     stdout.writeln('waiting for the cut-out...');
@@ -99,6 +121,8 @@ Future<void> main(List<String> args) async {
   } finally {
     process.kill();
     await process.exitCode;
+    chromeOut.close();
+    chromeErr.close();
     await server.close(force: true);
     // Chrome's helpers can still write to the profile for a moment.
     await Future<void>.delayed(const Duration(seconds: 1));
@@ -155,15 +179,12 @@ ContentType _contentType(String path) => switch (extension(path)) {
   _ => ContentType.binary,
 };
 
-Future<void> _run(String executable, List<String> args) async {
-  stdout.writeln('\$ $executable ${args.join(' ')}');
-  final process = await Process.start(
-    executable,
-    args,
+/// Runs [executable] with the terminal of this script, the command shown; a
+/// non zero exit code throws.
+Future<void> _run(String executable, List<String> args) => Shell(
+  options: ShellOptions(
     mode: ProcessStartMode.inheritStdio,
-  );
-  final code = await process.exitCode;
-  if (code != 0) {
-    throw ProcessException(executable, args, 'exit code $code', code);
-  }
-}
+    verbose: false,
+    commandVerbose: true,
+  ),
+).runExecutableArguments(executable, args);

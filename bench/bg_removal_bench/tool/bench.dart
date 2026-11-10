@@ -16,6 +16,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart';
+import 'package:process_run/shell.dart' show Shell, ShellLinesController, which;
 
 import 'src/adb_app.dart';
 
@@ -75,30 +76,33 @@ Future<List<String>> _linux(List<String> defines, String? modelsDir) async {
     ...defines,
   ]);
   const binary = 'build/linux/x64/release/bundle/bg_removal_bench';
-  final xvfb = Process.runSync('which', ['xvfb-run']).exitCode == 0;
-  final process = await Process.start(
-    xvfb ? 'xvfb-run' : binary,
-    [
-      if (xvfb) ...['-a', '-s', '-screen 0 1600x1200x24', binary],
-    ],
+  final xvfb = await which('xvfb-run') != null;
+  final out = ShellLinesController(encoding: utf8);
+  final err = ShellLinesController(encoding: utf8);
+  final lines = <String>[];
+  err.stream.listen((_) {});
+  final reading = out.stream.forEach((line) {
+    final i = line.indexOf('BENCH| ');
+    if (i >= 0) {
+      lines.add(line.substring(i + 7));
+    }
+  });
+  await Shell(
+    stdout: out.sink,
+    stderr: err.sink,
     environment: {
       'BG_REMOVAL_MODELS': ?modelsDir,
       // Headless: X11 only.
       if (xvfb) 'WAYLAND_DISPLAY': '',
     },
-  );
-  final lines = <String>[];
-  unawaited(process.stderr.drain<void>());
-  await for (final line
-      in process.stdout
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())) {
-    final i = line.indexOf('BENCH| ');
-    if (i >= 0) {
-      lines.add(line.substring(i + 7));
-    }
-  }
-  await process.exitCode;
+    verbose: false,
+    throwOnError: false,
+  ).runExecutableArguments(xvfb ? 'xvfb-run' : binary, [
+    if (xvfb) ...['-a', '-s', '-screen 0 1600x1200x24', binary],
+  ]);
+  out.close();
+  err.close();
+  await reading;
   return lines;
 }
 

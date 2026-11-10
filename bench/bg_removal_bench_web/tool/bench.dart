@@ -17,6 +17,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart';
+import 'package:process_run/shell.dart'
+    show Shell, ShellLinesController, ShellOptions;
 
 Future<void> main(List<String> args) async {
   String? option(String name) {
@@ -88,40 +90,61 @@ Future<void> main(List<String> args) async {
     await response.close();
   });
   final url = 'http://127.0.0.1:${server.port}/';
-  final version = (Process.runSync(chrome, ['--version']).stdout as String)
-      .trim();
+  final version =
+      (Shell(
+                verbose: false,
+                throwOnError: false,
+              ).runExecutableArgumentsSync(chrome, ['--version']).stdout
+              as String)
+          .trim();
   final userDataDir = Directory.systemTemp.createTempSync('bg_bench_chrome');
   final outDir = Directory(join('.local', 'bench'))
     ..createSync(recursive: true);
   final log = File(join(outDir.path, '${stamp}_web_chrome.log')).openWrite();
   stdout.writeln('running in $version at $url...');
-  final process = await Process.start(chrome, [
-    '--headless=new',
-    // CanvasKit needs WebGL: software rendering.
-    '--use-angle=swiftshader',
-    '--enable-unsafe-swiftshader',
-    if (provider == 'webgpu') '--enable-unsafe-webgpu',
-    '--no-first-run',
-    '--no-default-browser-check',
-    '--enable-logging=stderr',
-    '--v=0',
-    '--user-data-dir=${userDataDir.path}',
-    url,
-  ]);
-  unawaited(process.stdout.drain<void>());
-  final stderrDone = process.stderr
-      .transform(utf8.decoder)
-      .transform(const LineSplitter())
-      .listen((line) {
-        log.writeln(line);
-        // The page's progress and errors.
-        if (line.contains('CONSOLE') && !line.contains('BENCH|')) {
-          stdout.writeln(
-            '  ${line.length > 200 ? line.substring(0, 200) : line}',
-          );
-        }
-      })
-      .asFuture<void>();
+  final chromeOut = ShellLinesController(encoding: utf8);
+  final chromeErr = ShellLinesController(encoding: utf8);
+  final chromeStarted = Completer<Process>();
+  // Not awaited: Chrome runs while the bench does. Its exit code comes with
+  // its process (`onProcess`), the run ends with its output pipes, which its
+  // helpers can hold a while.
+  final chromeRun =
+      Shell(
+        stdout: chromeOut.sink,
+        stderr: chromeErr.sink,
+        verbose: false,
+        throwOnError: false,
+      ).runExecutableArguments(chrome, [
+        '--headless=new',
+        // CanvasKit needs WebGL: software rendering.
+        '--use-angle=swiftshader',
+        '--enable-unsafe-swiftshader',
+        if (provider == 'webgpu') '--enable-unsafe-webgpu',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--enable-logging=stderr',
+        '--v=0',
+        '--user-data-dir=${userDataDir.path}',
+        url,
+      ], onProcess: chromeStarted.complete);
+  unawaited(
+    chromeRun.then<void>(
+      (_) {},
+      onError: (Object e, StackTrace st) {
+        // It could not start.
+        if (!chromeStarted.isCompleted) chromeStarted.completeError(e, st);
+      },
+    ),
+  );
+  final process = await chromeStarted.future;
+  chromeOut.stream.listen((_) {});
+  final stderrDone = chromeErr.stream.listen((line) {
+    log.writeln(line);
+    // The page's progress and errors.
+    if (line.contains('CONSOLE') && !line.contains('BENCH|')) {
+      stdout.writeln('  ${line.length > 200 ? line.substring(0, 200) : line}');
+    }
+  }).asFuture<void>();
   String markdown;
   try {
     markdown = await report.future.timeout(const Duration(minutes: 30));
@@ -130,6 +153,8 @@ Future<void> main(List<String> args) async {
   }
   process.kill();
   await process.exitCode;
+  chromeOut.close();
+  chromeErr.close();
   await stderrDone.catchError((_) {});
   await log.close();
   await server.close(force: true);
@@ -158,15 +183,12 @@ ContentType _contentType(String path) => switch (extension(path)) {
   _ => ContentType.binary,
 };
 
-Future<void> _run(String executable, List<String> args) async {
-  stdout.writeln('\$ $executable ${args.join(' ')}');
-  final process = await Process.start(
-    executable,
-    args,
+/// Runs [executable] with the terminal of this script, the command shown; a
+/// non zero exit code throws.
+Future<void> _run(String executable, List<String> args) => Shell(
+  options: ShellOptions(
     mode: ProcessStartMode.inheritStdio,
-  );
-  final code = await process.exitCode;
-  if (code != 0) {
-    throw ProcessException(executable, args, 'exit code $code', code);
-  }
-}
+    verbose: false,
+    commandVerbose: true,
+  ),
+).runExecutableArguments(executable, args);

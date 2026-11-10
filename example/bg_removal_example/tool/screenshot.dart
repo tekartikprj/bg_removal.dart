@@ -13,6 +13,8 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart';
+import 'package:process_run/shell.dart'
+    show Shell, ShellOptions, runExecutableArguments;
 
 const _package = 'com.tekartik.bg_removal_example';
 
@@ -28,8 +30,11 @@ Future<void> main(List<String> args) async {
   final serial = [
     if (device != null) ...['-s', device],
   ];
+  final adbShell = Shell(verbose: false, throwOnError: false);
   String adb(List<String> args) =>
-      (Process.runSync('adb', [...serial, ...args]).stdout as String).trim();
+      (adbShell.runExecutableArgumentsSync('adb', [...serial, ...args]).stdout
+              as String)
+          .trim();
 
   final abi = adb(['shell', 'getprop', 'ro.product.cpu.abi']);
   final platform = switch (abi) {
@@ -80,7 +85,7 @@ Future<void> main(List<String> args) async {
   }
   // Let the cut-out paint.
   await Future<void>.delayed(const Duration(seconds: 2));
-  final screenshot = await Process.run('adb', [
+  final screenshot = await runExecutableArguments('adb', [
     ...serial,
     'exec-out',
     'screencap',
@@ -98,15 +103,12 @@ Future<void> main(List<String> args) async {
   stdout.writeln('$done, screenshot: $out');
 }
 
-Future<void> _run(String executable, List<String> args) async {
-  stdout.writeln('\$ $executable ${args.join(' ')}');
-  final process = await Process.start(
-    executable,
-    args,
+/// Runs [executable] with the terminal of this script, the command shown; a
+/// non zero exit code throws.
+Future<void> _run(String executable, List<String> args) => Shell(
+  options: ShellOptions(
     mode: ProcessStartMode.inheritStdio,
-  );
-  final code = await process.exitCode;
-  if (code != 0) {
-    throw ProcessException(executable, args, 'exit code $code', code);
-  }
-}
+    verbose: false,
+    commandVerbose: true,
+  ),
+).runExecutableArguments(executable, args);

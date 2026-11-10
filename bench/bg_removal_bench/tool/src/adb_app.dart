@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:process_run/shell.dart'
+    show Shell, ShellOptions, runExecutableArguments;
+
 /// The app's package on Android.
 const appPackage = 'com.tekartik.bg_removal_bench';
 
@@ -20,7 +23,11 @@ class AdbApp {
 
   /// Runs adb, returns its trimmed stdout.
   String adb(List<String> args) =>
-      (Process.runSync('adb', [..._serial, ...args]).stdout as String).trim();
+      (_adbShell.runExecutableArgumentsSync('adb', [..._serial, ...args]).stdout
+              as String)
+          .trim();
+
+  final _adbShell = Shell(verbose: false, throwOnError: false);
 
   /// `model, Android release, abi`.
   String describe() =>
@@ -89,7 +96,7 @@ class AdbApp {
 
   /// Saves a screenshot to [path].
   Future<void> screenshot(String path) async {
-    final result = await Process.run('adb', [
+    final result = await runExecutableArguments('adb', [
       ..._serial,
       'exec-out',
       'screencap',
@@ -107,15 +114,10 @@ String fileStamp() => DateTime.now()
     .replaceAll('T', '_');
 
 /// Runs [executable] with the console attached, throws on failure.
-Future<void> run(String executable, List<String> args) async {
-  stdout.writeln('\$ $executable ${args.join(' ')}');
-  final process = await Process.start(
-    executable,
-    args,
+Future<void> run(String executable, List<String> args) => Shell(
+  options: ShellOptions(
     mode: ProcessStartMode.inheritStdio,
-  );
-  final code = await process.exitCode;
-  if (code != 0) {
-    throw ProcessException(executable, args, 'exit code $code', code);
-  }
-}
+    verbose: false,
+    commandVerbose: true,
+  ),
+).runExecutableArguments(executable, args);

@@ -24,6 +24,8 @@ dependencies:
     path: ../../packages/bg_removal_onnx
 
 dev_dependencies:
+  # The tool scripts: every command goes through its Shell.
+  process_run: ">=1.4.4"
   flutter_test:
     sdk: flutter
   # tool/screenshot.dart
